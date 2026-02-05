@@ -85,13 +85,13 @@ extern "C" {
 
     fn ets_efuse_flash_octal_mode() -> bool;
 
-    fn esp_rom_opiflash_wait_idle() -> i32;
-    fn esp_rom_opiflash_erase_block_64k(addr: u32) -> i32;
-    fn esp_rom_opiflash_erase_sector(addr: u32) -> i32;
-    fn esp_rom_opiflash_read(addr: u32, buf: *mut (), len: i32) -> i32;
-    fn esp_rom_opiflash_write(addr: u32, data: *const u32, len: i32) -> i32;
-    fn esp_rom_opiflash_wren(p: *mut ()) -> i32;
-    fn esp_rom_opiflash_erase_area(start_addr: u32, end_addr: u32) -> i32;
+    // fn esp_rom_opiflash_wait_idle() -> i32;
+    // fn esp_rom_opiflash_erase_block_64k(addr: u32) -> i32;
+    // fn esp_rom_opiflash_erase_sector(addr: u32) -> i32;
+    // fn esp_rom_opiflash_read(addr: u32, buf: *mut (), len: i32) -> i32;
+    // fn esp_rom_opiflash_write(addr: u32, data: *const u32, len: i32) -> i32;
+    // fn esp_rom_opiflash_wren(p: *mut ()) -> i32;
+    // fn esp_rom_opiflash_erase_area(start_addr: u32, end_addr: u32) -> i32;
 }
 
 pub fn attach() -> i32 {
@@ -117,6 +117,7 @@ pub fn attach() -> i32 {
 
     #[cfg(feature = "esp32s3")]
     if unsafe { ets_efuse_flash_octal_mode() } {
+        crate::dprintln!("Octal mode");
         init_ospi_funcs();
     }
 
@@ -336,16 +337,16 @@ fn init_ospi_funcs() {
         rd_addr_bit_len: 24,
         read_sub_len: 16,
         write_sub_len: 32,
-        unlock: Some(esp_rom_opiflash_wait_idle),
-        erase_block: Some(esp_rom_opiflash_erase_block_64k),
-        erase_sector: Some(esp_rom_opiflash_erase_sector),
-        read: Some(esp_rom_opiflash_read),
-        write: Some(esp_rom_opiflash_write),
+        unlock: None,
+        erase_block: None,
+        erase_sector: None,
+        read: None,
+        write: None,
         encrypt_write: None,
         check_sus: None,
-        wait_idle: Some(esp_rom_opiflash_wait_idle),
-        wren: Some(esp_rom_opiflash_wren),
-        erase_area: Some(esp_rom_opiflash_erase_area),
+        wait_idle: None,
+        wren: None,
+        erase_area: None,
     };
 
     unsafe {
