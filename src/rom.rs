@@ -8,6 +8,12 @@ pub struct RomDataTable {
     pub bss_end: u32,
 }
 
+impl RomDataTable {
+    pub fn is_end_marker(&self) -> bool {
+        self.data_start == 0 && self.data_end == 0 && self.bss_start == 0 && self.bss_end == 0
+    }
+}
+
 struct DataTableDataEntry {
     dst_start: u32, // RAM
     dst_end: u32,   // RAM
@@ -112,6 +118,9 @@ pub fn init_rom_data() {
         .filter(|table| table.min_revision <= rev)
         .last()
     {
-        table.init();
+        if !table.is_end_marker() {
+            dprintln!("Initializing ROM data table");
+            table.init();
+        }
     }
 }

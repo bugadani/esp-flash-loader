@@ -83,7 +83,7 @@ foreach ($d in $devicesToBuild) {
 
     # Run target-gen to produce YAML
     if ($ProbeRsPath) {
-        $outYaml = "$ProbeRsPath/probe-rs/targets/$d.yaml"
+        $outYaml = "$ProbeRsPath/$d.yaml"
         Write-Host "Generating YAML: $outYaml"
         & target-gen elf $targetPath $outYaml -u --name "$d-flashloader" --fixed-load-address
     } else {

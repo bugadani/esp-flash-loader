@@ -7,13 +7,23 @@ use crate::{
 // Max of 16MB
 pub const MAX_FLASH_SIZE: u32 = 0x1000000;
 
-pub const ROM_DATA_TABLES: RomDataTables = &[RomDataTable {
-    min_revision: 0,
-    data_start: 0x4001A18C,
-    data_end: 0x4001A318,
-    bss_start: 0x4001A318,
-    bss_end: 0x4001A418,
-}];
+pub const ROM_DATA_TABLES: RomDataTables = &[
+    RomDataTable {
+        min_revision: 0,
+        data_start: 0x4001A18C,
+        data_end: 0x4001A318,
+        bss_start: 0x4001A318,
+        bss_end: 0x4001A418,
+    },
+    // Later ECOs' ROM elfs are not available, let's not initialize memory for them.
+    RomDataTable {
+        min_revision: 100,
+        data_start: 0,
+        data_end: 0,
+        bss_start: 0,
+        bss_end: 0,
+    },
+];
 
 pub const ROM_TABLE_ENTRY_SIZE: u32 = 12;
 
