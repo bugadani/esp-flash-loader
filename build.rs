@@ -28,6 +28,8 @@ fn main() {
     let chip = "esp32h2";
     #[cfg(feature = "esp32p4")]
     let chip = "esp32p4";
+    #[cfg(feature = "esp32s31")]
+    let chip = "esp32s31";
 
     println!("cargo:rustc-env=CHIP_NAME={chip}");
 
