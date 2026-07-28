@@ -25,7 +25,7 @@ pub const ROM_TABLE_ENTRY_SIZE: u32 = 12;
 pub const EFUSE_INFO: EfuseInfo = EfuseInfo {
     // EFUSE peripheral base = 0x20715000; readable data starts at offset 0x2C
     block0: 0x2071_5000 + 0x2C,
-    block_sizes: &[6, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8],
+    block_sizes: &[9, 6, 8, 8, 8, 8, 8, 8, 8, 8],
 };
 
 pub const MEM_SPI: MemSpi = MemSpi {
