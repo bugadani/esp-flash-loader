@@ -53,3 +53,8 @@ pub unsafe extern "C" fn VendorFunc_FlashSize() -> i32 {
 pub unsafe extern "C" fn VendorFunc_ChipRevision() -> i32 {
     crate::ChipRevision_impl()
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn VendorFunc_Signatures_md5(table: *mut u8, count: u32) -> i32 {
+    crate::Signatures_md5_impl(table, count)
+}

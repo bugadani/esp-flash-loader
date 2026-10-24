@@ -144,3 +144,16 @@ extern "C" fn VendorFunc_ChipRevision() {
         "break 1, 15",
     );
 }
+
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+extern "C" fn VendorFunc_Signatures_md5() {
+    core::arch::naked_asm!(
+        "l32r a1, STACK_PTR",
+        "mov.n a6, a2",
+        "mov.n a7, a3",
+        "call4 Signatures_md5_impl",
+        "mov.n a2, a6",
+        "break 1, 15",
+    );
+}

@@ -51,6 +51,7 @@ use crate::tinfl::{
 #[cfg_attr(any(target_arch = "xtensa"), path = "api_xtensa.rs")]
 mod api;
 mod flash;
+mod md5;
 mod micro_rtt;
 mod properties;
 mod tinfl;
@@ -73,6 +74,8 @@ struct FlasherState {
     saved_cpu_state: CpuSaveState,
     decompressor: Decompressor,
     read_buffer: [u8; 256],
+    signature_buffer: [u8; 4096],
+    md5: md5::Md5Context,
 }
 
 static mut STATE: FlasherState = FlasherState {
@@ -80,6 +83,8 @@ static mut STATE: FlasherState = FlasherState {
     saved_cpu_state: CpuSaveState::new(),
     decompressor: Decompressor::new(),
     read_buffer: [0; 256],
+    signature_buffer: [0; 4096],
+    md5: md5::Md5Context::new(),
 };
 
 fn state() -> Option<&'static mut FlasherState> {
@@ -203,6 +208,61 @@ pub unsafe extern "C" fn ReadFlash_impl(adr: u32, sz: u32, buf: *mut u8) -> i32 
 
     let buf = core::slice::from_raw_parts_mut(buf, sz as usize);
     crate::flash::read_flash(adr, buf)
+}
+
+/// Signs `count` entries of the signature table at `table`.
+///
+/// Each entry is `address: u32`, `size: u32`, `status: u32`, then the 16 byte MD5 digest,
+/// all little-endian. The status is 0 for a signed range, and 1 for an erased range.
+///
+/// Returns the number of entries done, or a negative error code.
+#[no_mangle]
+pub unsafe extern "C" fn Signatures_md5_impl(table: *mut u8, count: u32) -> i32 {
+    const STRIDE: usize = 28;
+    const STATUS_SIGNED: u32 = 0;
+    const STATUS_EMPTY: u32 = 1;
+
+    let Some(state) = state() else {
+        return ERROR_BASE_INTERNAL - 1;
+    };
+
+    if (table as u32) % 4 != 0 {
+        dprintln!("ERROR table not word aligned");
+        return ERROR_BASE_INTERNAL - 5;
+    }
+
+    dprintln!("SIGN {} ranges", count);
+
+    let table = core::slice::from_raw_parts_mut(table as *mut [u8; STRIDE], count as usize);
+    for entry in table.iter_mut() {
+        let [a0, a1, a2, a3, s0, s1, s2, s3, ..] = *entry;
+        let address = u32::from_le_bytes([a0, a1, a2, a3]);
+        let size = u32::from_le_bytes([s0, s1, s2, s3]);
+
+        let hasher = &mut state.md5;
+        hasher.init();
+        let mut erased = true;
+        let mut offset = 0;
+        while offset < size {
+            let len = (size - offset).min(state.signature_buffer.len() as u32);
+            let Some(buffer) = state.signature_buffer.get_mut(..len as usize) else {
+                return ERROR_BASE_INTERNAL - 3;
+            };
+            if crate::flash::read_flash(address + offset, buffer) != 0 {
+                return ERROR_BASE_INTERNAL - 2;
+            }
+            erased &= buffer.iter().all(|&byte| byte == 0xFF);
+            hasher.update(&*buffer);
+            offset += len;
+        }
+
+        let status = if erased { STATUS_EMPTY } else { STATUS_SIGNED };
+        let [_, _, _, _, _, _, _, _, s0, s1, s2, s3, digest @ ..] = entry;
+        [*s0, *s1, *s2, *s3] = status.to_le_bytes();
+        hasher.finalize(digest);
+    }
+
+    count as i32
 }
 
 #[no_mangle]
